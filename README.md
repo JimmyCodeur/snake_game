@@ -1,18 +1,18 @@
-# Jeu Snake
+# 🐍 Jeu Snake
 
 ![Démo du Jeu du Serpent](snake_demo.gif)
 
 ## Description
 
-Il s'agit d'une implémentation simple du jeu classique du Serpent en utilisant Python. Le joueur contrôle un serpent qui se déplace autour de l'écran, mangeant de la nourriture pour grandir. Le jeu se termine lorsque le serpent entre en collision avec lui-même ou avec les limites de l'écran.
+Bienvenue dans cette version du jeu classique du Serpent, implémentée en Python. Contrôlez un serpent qui se déplace autour de l'écran, mangeant de la nourriture pour grandir. Le jeu se termine lorsque le serpent entre en collision avec lui-même ou avec les limites de l'écran.
 
 ## Fonctionnalités
 
-- Déplacement du serpent contrôlé par les touches directionnelles
-- Génération aléatoire de la nourriture à l'écran
-- Détection de collision pour gérer les collisions serpent-nourriture et serpent-serpent
-- Suivi du score
-- Message de fin de partie et option pour redémarrer le jeu
+- Contrôle du serpent avec les touches directionnelles ⬆️⬇️⬅️➡️
+- Génération aléatoire de la nourriture à l'écran 🍎
+- Détection de collision pour gérer les interactions serpent-nourriture et serpent-serpent 🚫
+- Suivi du score 📈
+- Message de fin de partie et option pour redémarrer le jeu 🎮
 
 ## Utilisation
 
