@@ -22,11 +22,4 @@ Bienvenue dans cette version du jeu classique du Serpent, implémentée en Pytho
     ```bash
         snake.py
 
-## Gameplay     
-- Utilisez les touches directionnelles pour contrôler le déplacement du serpent.
-- Mangez la nourriture (désignée par un cube rouge) pour grandir.
-- Évitez les collisions avec les limites de l'écran ou avec le serpent lui-même.
-- Votre score augmentera à chaque fois que vous mangerez de la nourriture.
-- Lorsque le jeu se termine, appuyez sur q pour quitter ou r pour redemarré.
-
 Bon jeu !
