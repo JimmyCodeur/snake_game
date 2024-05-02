@@ -46,7 +46,7 @@ class Snake:
 
     def draw(self, screen):
         for segment in self.body:
-            pygame.draw.rect(screen, white, pygame.Rect(segment[0], segment[1], self.cell_size, self.cell_size))
+            pygame.draw.rect(screen, green, pygame.Rect(segment[0], segment[1], self.cell_size, self.cell_size))
 
     def check_portal_collision(self, portal):
         head = self.body[0]
