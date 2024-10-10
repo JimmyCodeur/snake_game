@@ -1,28 +1,28 @@
-# 🐍 Jeu Snake
+# 🐍 Snake Game
 
 ## Description
 
-Bienvenue dans cette version du jeu classique Snake, implémentée en Python. Contrôlez un serpent qui se déplace autour de l'écran, mangeant de la nourriture pour grandir. Le jeu se termine lorsque le serpent entre en collision avec lui-même ou avec les limites de l'écran.
+Welcome to this version of the classic Snake game, implemented in Python. Control a snake that moves around the screen, eating food to grow larger. The game ends when the snake collides with itself or with the edges of the screen.
 
-## Capture d'écran de l'interface utilisateur
+## User Interface Screenshot
 
-![Capture d'écran de l'interface utilisateur](./screen_demo.PNG)
+![Screenshot of the user interface](./screen_demo.PNG)
 
 
-## Fonctionnalités
+## Features
 
-- Contrôle du serpent avec les touches directionnelles ⬆️⬇️⬅️➡️
-- Génération aléatoire de la nourriture à l'écran 🍎
-- Détection de collision pour gérer les interactions serpent-nourriture et serpent-serpent 🚫
-- Suivi du score 📈
-- Message de fin de partie et option pour redémarrer le jeu 🎮
+-Control the snake using the arrow keys ⬆️⬇️⬅️➡️
+-Random generation of food on the screen 🍎
+-Collision detection to handle snake-food and snake-snake interactions 🚫
+-Score tracking 📈
+-End game message and option to restart the game 🎮
 
-## Utilisation
+## Usage
 
-1. Clonez le dépôt.
-2. Naviguez jusqu'au répertoire contenant snake.py.
-3. Lancez le script :
+1. Clone the repository.
+2. Navigate to the directory containing snake.py.
+3. Run the script:
     ```bash
         snake.py
 
-Bon jeu !
+Enjoy the game!
