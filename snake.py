@@ -86,10 +86,13 @@ class Score:
     def reset_score(self):
         self.score = 0
 
-    def display_score(self, screen):
+    def display_score(self, screen, difficulty=None):
         font = pygame.font.Font(None, 36)
         text = font.render(f"Score: {self.score}", True, white)
         screen.blit(text, (10, 10))
+        if difficulty:
+            difficulty_text = font.render(f"Niveau: {difficulty}", True, white)
+            screen.blit(difficulty_text, (width - 200, 10))
 
 class PowerUp:
     def __init__(self, cell_size):
@@ -136,21 +139,21 @@ def choose_difficulty():
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_F1:
-                    return "Facile", fps_facile
+                    return "Facile", EASY_SPEED
                 elif event.key == pygame.K_F2:
-                    return "Moyen", fps_moyen
+                    return "Normal", NORMAL_SPEED
                 elif event.key == pygame.K_F3:
-                    return "Difficile", fps_difficile
+                    return "Difficile", HARD_SPEED
 
         screen.fill(black)
         font = pygame.font.Font(None, 36)
         text = font.render("Choisissez le niveau de difficulté:", True, white)
         screen.blit(text, (width//4, height//2 - 50))
-        text = font.render("F1 - Facile", True, white)
+        text = font.render("F1 - Facile (vitesse lente)", True, white)
         screen.blit(text, (width//4, height//2))
-        text = font.render("F2 - Moyen", True, white)
+        text = font.render("F2 - Normal (vitesse actuelle)", True, white)
         screen.blit(text, (width//4, height//2 + 50))
-        text = font.render("F3 - Difficile", True, white)
+        text = font.render("F3 - Difficile (vitesse rapide)", True, white)
         screen.blit(text, (width//4, height//2 + 100))
         pygame.display.flip()
 
@@ -182,9 +185,9 @@ pygame.init()
 
 width, height = 1080, 900
 cell_size = 20
-fps_facile = 5
-fps_moyen = 10
-fps_difficile = 20
+EASY_SPEED = 10
+NORMAL_SPEED = 15
+HARD_SPEED = 25
 
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -221,8 +224,8 @@ for _ in range(num_power_ups):
     power_up = PowerUp(cell_size)
     power_ups.append(power_up)
 
-if difficulty == "Moyen" or difficulty == "Difficile":
-    num_obstacles = 10 if difficulty == "Moyen" else 20
+if difficulty == "Normal" or difficulty == "Difficile":
+    num_obstacles = 10 if difficulty == "Normal" else 20
     for _ in range(num_obstacles):
         obstacle = Obstacle(cell_size)
         obstacles.append(obstacle)
@@ -255,8 +258,8 @@ while True:
             snake = Snake(cell_size)
             food = Food(cell_size)
             obstacles = []
-            if difficulty == "Moyen" or difficulty == "Difficile":
-                num_obstacles = 10 if difficulty == "Moyen" else 20
+            if difficulty == "Normal" or difficulty == "Difficile":
+                num_obstacles = 10 if difficulty == "Normal" else 20
                 for _ in range(num_obstacles):
                     obstacle = Obstacle(cell_size)
                     obstacles.append(obstacle)
@@ -273,7 +276,7 @@ while True:
     portal.draw(screen)
     for obstacle in obstacles:
         obstacle.draw(screen)
-    score.display_score(screen)
+    score.display_score(screen, difficulty)
 
     pygame.display.flip()
     pygame.time.Clock().tick(fps)
