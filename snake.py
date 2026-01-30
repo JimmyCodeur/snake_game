@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import os
 
 class Snake:
     def __init__(self, cell_size):
@@ -160,7 +161,8 @@ def draw_centered_text(screen, text, font, color, y_offset=0):
     text_rect.center = (width // 2, height // 2 + y_offset)
     screen.blit(text_surface, text_rect)
 
-def game_over_screen():
+def game_over_screen(final_score):
+    save_high_score(final_score)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -170,12 +172,118 @@ def game_over_screen():
                 if event.key == pygame.K_r:
                     return True
                 elif event.key == pygame.K_q:
+                    return False
+                elif event.key == pygame.K_m:
+                    return "menu"
+
+        screen.fill(black)
+        font = pygame.font.Font(None, 36)
+        draw_centered_text(screen, "Game Over!", font, white, -50)
+        draw_centered_text(screen, f"Score: {final_score}", font, yellow, 0)
+        draw_centered_text(screen, "R - Rejouer | M - Menu | Q - Quitter", font, white, 50)
+        pygame.display.flip()
+
+def load_high_scores():
+    scores_file = os.path.join(os.path.dirname(__file__), "high_scores.txt")
+    scores = []
+    if os.path.exists(scores_file):
+        with open(scores_file, "r") as f:
+            for line in f:
+                try:
+                    scores.append(int(line.strip()))
+                except ValueError:
+                    pass
+    return sorted(scores, reverse=True)[:10]
+
+def save_high_score(score):
+    scores_file = os.path.join(os.path.dirname(__file__), "high_scores.txt")
+    scores = load_high_scores()
+    scores.append(score)
+    scores = sorted(scores, reverse=True)[:10]
+    with open(scores_file, "w") as f:
+        for s in scores:
+            f.write(f"{s}\n")
+
+def show_high_scores():
+    scores = load_high_scores()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
+                    return
+
+        screen.fill(black)
+        title_font = pygame.font.Font(None, 72)
+        font = pygame.font.Font(None, 36)
+
+        draw_centered_text(screen, "HIGH SCORES", title_font, yellow, -250)
+
+        if not scores:
+            draw_centered_text(screen, "Aucun score enregistré", font, white, 0)
+        else:
+            for i, s in enumerate(scores):
+                y_offset = -150 + i * 40
+                rank_text = f"{i + 1}. {s} points"
+                color = yellow if i == 0 else white
+                draw_centered_text(screen, rank_text, font, color, y_offset)
+
+        draw_centered_text(screen, "Appuyez sur Entrée ou Échap pour revenir", font, gray, 300)
+        pygame.display.flip()
+
+def show_menu():
+    menu_options = ["Jouer", "High Scores", "Quitter"]
+    selected = 0
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    selected = (selected - 1) % len(menu_options)
+                elif event.key == pygame.K_DOWN:
+                    selected = (selected + 1) % len(menu_options)
+                elif event.key == pygame.K_RETURN:
+                    if selected == 0:
+                        return "play"
+                    elif selected == 1:
+                        return "highscores"
+                    elif selected == 2:
+                        pygame.quit()
+                        sys.exit()
+                elif event.key == pygame.K_1:
+                    return "play"
+                elif event.key == pygame.K_2:
+                    return "highscores"
+                elif event.key == pygame.K_3:
                     pygame.quit()
                     sys.exit()
 
         screen.fill(black)
-        font = pygame.font.Font(None, 36)
-        draw_centered_text(screen, "Game Over! Appuyez sur R pour rejouer ou sur Q pour quitter.", font, white)
+
+        title_font = pygame.font.Font(None, 100)
+        draw_centered_text(screen, "SNAKE GAME", title_font, green, -200)
+
+        menu_font = pygame.font.Font(None, 48)
+        for i, option in enumerate(menu_options):
+            y_offset = -20 + i * 60
+            if i == selected:
+                color = yellow
+                prefix = "> "
+                suffix = " <"
+            else:
+                color = white
+                prefix = "  "
+                suffix = "  "
+            draw_centered_text(screen, f"{prefix}{i + 1}. {option}{suffix}", menu_font, color, y_offset)
+
+        hint_font = pygame.font.Font(None, 28)
+        draw_centered_text(screen, "Utilisez les flèches + Entrée ou les touches 1-3", hint_font, gray, 200)
+
         pygame.display.flip()
 
 pygame.init()
@@ -208,72 +316,86 @@ maroon = (128, 0, 0)
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Snake Game")
 
-difficulty, fps = choose_difficulty()
+def init_game(difficulty):
+    snake = Snake(cell_size)
+    food = Food(cell_size)
+    score = Score()
+    obstacles = []
+    power_ups = []
+    num_power_ups = 3
 
-snake = Snake(cell_size)
-food = Food(cell_size)
-score = Score()
-obstacles = []
-power_ups = []
-num_power_ups = 3
+    for _ in range(num_power_ups):
+        power_up = PowerUp(cell_size)
+        power_ups.append(power_up)
 
-for _ in range(num_power_ups):
-    power_up = PowerUp(cell_size)
-    power_ups.append(power_up)
+    if difficulty == "Moyen" or difficulty == "Difficile":
+        num_obstacles = 10 if difficulty == "Moyen" else 20
+        for _ in range(num_obstacles):
+            obstacle = Obstacle(cell_size)
+            obstacles.append(obstacle)
 
-if difficulty == "Moyen" or difficulty == "Difficile":
-    num_obstacles = 10 if difficulty == "Moyen" else 20
-    for _ in range(num_obstacles):
-        obstacle = Obstacle(cell_size)
-        obstacles.append(obstacle)
+    portal = Porte(cell_size, (width - cell_size, height // 2))
+    return snake, food, score, obstacles, power_ups, portal
 
-portal = Porte(cell_size, (width - cell_size, height // 2))
+def game_loop(snake, food, score, obstacles, portal, fps, difficulty):
+    clock = pygame.time.Clock()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    snake.change_direction((0, -cell_size))
+                elif event.key == pygame.K_DOWN:
+                    snake.change_direction((0, cell_size))
+                elif event.key == pygame.K_LEFT:
+                    snake.change_direction((-cell_size, 0))
+                elif event.key == pygame.K_RIGHT:
+                    snake.change_direction((cell_size, 0))
 
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                snake.change_direction((0, -cell_size))
-            elif event.key == pygame.K_DOWN:
-                snake.change_direction((0, cell_size))
-            elif event.key == pygame.K_LEFT:
-                snake.change_direction((-cell_size, 0))
-            elif event.key == pygame.K_RIGHT:
-                snake.change_direction((cell_size, 0))
+        snake.move()
 
-    snake.move()
+        if snake.check_collision(obstacles, width, height):
+            final_score = score.score
+            result = game_over_screen(final_score)
+            if result == "menu":
+                return "menu"
+            elif result:
+                snake, food, score, obstacles, _, portal = init_game(difficulty)
+            else:
+                pygame.quit()
+                sys.exit()
 
-    if snake.check_collision(obstacles, width, height):
-        score.reset_score()
-        if not game_over_screen():
-            pygame.quit()
-            sys.exit()
-        else:
-            snake = Snake(cell_size)
-            food = Food(cell_size)
-            obstacles = []
-            if difficulty == "Moyen" or difficulty == "Difficile":
-                num_obstacles = 10 if difficulty == "Moyen" else 20
-                for _ in range(num_obstacles):
-                    obstacle = Obstacle(cell_size)
-                    obstacles.append(obstacle)
+        if snake.check_food_collision(food):
+            snake.grow()
+            food.generate_position()
+            score.increase_score(10)
 
-    if snake.check_food_collision(food):
-        snake.grow()
-        food.generate_position()
-        score.increase_score(10)
+        screen.fill(black)
 
-    screen.fill(black)
+        snake.draw(screen)
+        food.draw(screen)
+        portal.draw(screen)
+        for obstacle in obstacles:
+            obstacle.draw(screen)
+        score.display_score(screen)
 
-    snake.draw(screen)
-    food.draw(screen)
-    portal.draw(screen)
-    for obstacle in obstacles:
-        obstacle.draw(screen)
-    score.display_score(screen)
+        pygame.display.flip()
+        clock.tick(fps)
 
-    pygame.display.flip()
-    pygame.time.Clock().tick(fps)
+def main():
+    while True:
+        menu_choice = show_menu()
+
+        if menu_choice == "highscores":
+            show_high_scores()
+        elif menu_choice == "play":
+            difficulty, fps = choose_difficulty()
+            snake, food, score, obstacles, power_ups, portal = init_game(difficulty)
+            result = game_loop(snake, food, score, obstacles, portal, fps, difficulty)
+            if result != "menu":
+                break
+
+if __name__ == "__main__":
+    main()
