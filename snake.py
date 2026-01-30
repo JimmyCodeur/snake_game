@@ -3,10 +3,11 @@ import sys
 import random
 
 class Snake:
-    def __init__(self, cell_size):
+    def __init__(self, cell_size, color=(0, 255, 0), start_pos=(100, 100)):
         self.cell_size = cell_size
+        self.color = color
         self.direction = (cell_size, 0)
-        self.body = [(100, 100), (90, 100), (80, 100)]
+        self.body = [start_pos, (start_pos[0] - cell_size, start_pos[1]), (start_pos[0] - 2*cell_size, start_pos[1])]
 
     def move(self):
         new_head = (self.body[0][0] + self.direction[0], self.body[0][1] + self.direction[1])
@@ -46,11 +47,15 @@ class Snake:
 
     def draw(self, screen):
         for segment in self.body:
-            pygame.draw.rect(screen, green, pygame.Rect(segment[0], segment[1], self.cell_size, self.cell_size))
+            pygame.draw.rect(screen, self.color, pygame.Rect(segment[0], segment[1], self.cell_size, self.cell_size))
 
     def check_portal_collision(self, portal):
         head = self.body[0]
         return head == portal.position
+
+    def check_snake_collision(self, other_snake):
+        head = self.body[0]
+        return head in other_snake.body
 
 class Food:
     def __init__(self, cell_size):
@@ -86,10 +91,18 @@ class Score:
     def reset_score(self):
         self.score = 0
 
-    def display_score(self, screen):
+    def display_score(self, screen, position='left', player_num=None):
         font = pygame.font.Font(None, 36)
-        text = font.render(f"Score: {self.score}", True, white)
-        screen.blit(text, (10, 10))
+        if player_num:
+            text = font.render(f"J{player_num}: {self.score}", True, white)
+        else:
+            text = font.render(f"Score: {self.score}", True, white)
+
+        if position == 'left':
+            screen.blit(text, (10, 10))
+        else:  # right
+            text_rect = text.get_rect()
+            screen.blit(text, (width - text_rect.width - 10, 10))
 
 class PowerUp:
     def __init__(self, cell_size):
@@ -128,6 +141,28 @@ class Porte:
     def draw(self, screen):
         pygame.draw.rect(screen, blue, pygame.Rect(self.position[0], self.position[1], self.cell_size, self.cell_size))
 
+def choose_game_mode():
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    return 1
+                elif event.key == pygame.K_2:
+                    return 2
+
+        screen.fill(black)
+        font = pygame.font.Font(None, 36)
+        text = font.render("Choisissez le mode de jeu:", True, white)
+        screen.blit(text, (width//4, height//2 - 50))
+        text = font.render("1 - Un joueur", True, white)
+        screen.blit(text, (width//4, height//2))
+        text = font.render("2 - Deux joueurs", True, white)
+        screen.blit(text, (width//4, height//2 + 50))
+        pygame.display.flip()
+
 def choose_difficulty():
     while True:
         for event in pygame.event.get():
@@ -160,7 +195,7 @@ def draw_centered_text(screen, text, font, color, y_offset=0):
     text_rect.center = (width // 2, height // 2 + y_offset)
     screen.blit(text_surface, text_rect)
 
-def game_over_screen():
+def game_over_screen(winner=None):
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -175,7 +210,11 @@ def game_over_screen():
 
         screen.fill(black)
         font = pygame.font.Font(None, 36)
-        draw_centered_text(screen, "Game Over! Appuyez sur R pour rejouer ou sur Q pour quitter.", font, white)
+        if winner:
+            draw_centered_text(screen, winner, font, white, -30)
+            draw_centered_text(screen, "Appuyez sur R pour rejouer ou sur Q pour quitter.", font, white, 30)
+        else:
+            draw_centered_text(screen, "Game Over! Appuyez sur R pour rejouer ou sur Q pour quitter.", font, white)
         pygame.display.flip()
 
 pygame.init()
@@ -208,14 +247,24 @@ maroon = (128, 0, 0)
 screen = pygame.display.set_mode((width, height))
 pygame.display.set_caption("Snake Game")
 
+game_mode = choose_game_mode()
 difficulty, fps = choose_difficulty()
 
-snake = Snake(cell_size)
+snake1 = Snake(cell_size, green, (100, 100))
 food = Food(cell_size)
-score = Score()
+score1 = Score()
 obstacles = []
 power_ups = []
 num_power_ups = 3
+
+# Initialiser le deuxième serpent en mode 2 joueurs
+if game_mode == 2:
+    snake2 = Snake(cell_size, blue, (width - 100, height - 100))
+    score2 = Score()
+    snake1_alive = True
+    snake2_alive = True
+else:
+    snake2 = None
 
 for _ in range(num_power_ups):
     power_up = PowerUp(cell_size)
@@ -235,45 +284,140 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
+            # Contrôles Joueur 1 (flèches)
             if event.key == pygame.K_UP:
-                snake.change_direction((0, -cell_size))
+                snake1.change_direction((0, -cell_size))
             elif event.key == pygame.K_DOWN:
-                snake.change_direction((0, cell_size))
+                snake1.change_direction((0, cell_size))
             elif event.key == pygame.K_LEFT:
-                snake.change_direction((-cell_size, 0))
+                snake1.change_direction((-cell_size, 0))
             elif event.key == pygame.K_RIGHT:
-                snake.change_direction((cell_size, 0))
+                snake1.change_direction((cell_size, 0))
 
-    snake.move()
+            # Contrôles Joueur 2 (ZQSD)
+            if game_mode == 2:
+                if event.key == pygame.K_z:
+                    snake2.change_direction((0, -cell_size))
+                elif event.key == pygame.K_s:
+                    snake2.change_direction((0, cell_size))
+                elif event.key == pygame.K_q:
+                    snake2.change_direction((-cell_size, 0))
+                elif event.key == pygame.K_d:
+                    snake2.change_direction((cell_size, 0))
 
-    if snake.check_collision(obstacles, width, height):
-        score.reset_score()
-        if not game_over_screen():
-            pygame.quit()
-            sys.exit()
-        else:
-            snake = Snake(cell_size)
-            food = Food(cell_size)
-            obstacles = []
-            if difficulty == "Moyen" or difficulty == "Difficile":
-                num_obstacles = 10 if difficulty == "Moyen" else 20
-                for _ in range(num_obstacles):
-                    obstacle = Obstacle(cell_size)
-                    obstacles.append(obstacle)
+    # Déplacer les serpents
+    if game_mode == 1:
+        snake1.move()
+    else:
+        if snake1_alive:
+            snake1.move()
+        if snake2_alive:
+            snake2.move()
 
-    if snake.check_food_collision(food):
-        snake.grow()
-        food.generate_position()
-        score.increase_score(10)
+    # Vérifier les collisions pour le mode 1 joueur
+    if game_mode == 1:
+        if snake1.check_collision(obstacles, width, height):
+            score1.reset_score()
+            if not game_over_screen():
+                pygame.quit()
+                sys.exit()
+            else:
+                snake1 = Snake(cell_size, green, (100, 100))
+                food = Food(cell_size)
+                obstacles = []
+                if difficulty == "Moyen" or difficulty == "Difficile":
+                    num_obstacles = 10 if difficulty == "Moyen" else 20
+                    for _ in range(num_obstacles):
+                        obstacle = Obstacle(cell_size)
+                        obstacles.append(obstacle)
+
+        if snake1.check_food_collision(food):
+            snake1.grow()
+            food.generate_position()
+            score1.increase_score(10)
+
+    # Vérifier les collisions pour le mode 2 joueurs
+    else:
+        # Vérifier collisions Joueur 1
+        if snake1_alive:
+            if snake1.check_collision(obstacles, width, height) or (snake2_alive and snake1.check_snake_collision(snake2)):
+                snake1_alive = False
+
+        # Vérifier collisions Joueur 2
+        if snake2_alive:
+            if snake2.check_collision(obstacles, width, height) or (snake1_alive and snake2.check_snake_collision(snake1)):
+                snake2_alive = False
+
+        # Fin de partie si au moins un serpent est mort
+        if not snake1_alive or not snake2_alive:
+            winner_message = ""
+            if not snake1_alive and not snake2_alive:
+                winner_message = "Match nul!"
+            elif snake1_alive:
+                winner_message = "Joueur 1 (Vert) gagne!"
+            else:
+                winner_message = "Joueur 2 (Bleu) gagne!"
+
+            score1.reset_score()
+            score2.reset_score()
+
+            if not game_over_screen(winner_message):
+                pygame.quit()
+                sys.exit()
+            else:
+                # Réinitialiser le jeu
+                game_mode = choose_game_mode()
+                difficulty, fps = choose_difficulty()
+                snake1 = Snake(cell_size, green, (100, 100))
+                food = Food(cell_size)
+                score1 = Score()
+                obstacles = []
+
+                if game_mode == 2:
+                    snake2 = Snake(cell_size, blue, (width - 100, height - 100))
+                    score2 = Score()
+                    snake1_alive = True
+                    snake2_alive = True
+                else:
+                    snake2 = None
+
+                if difficulty == "Moyen" or difficulty == "Difficile":
+                    num_obstacles = 10 if difficulty == "Moyen" else 20
+                    for _ in range(num_obstacles):
+                        obstacle = Obstacle(cell_size)
+                        obstacles.append(obstacle)
+
+        # Nourriture pour Joueur 1
+        if snake1_alive and snake1.check_food_collision(food):
+            snake1.grow()
+            food.generate_position()
+            score1.increase_score(10)
+
+        # Nourriture pour Joueur 2
+        if snake2_alive and snake2.check_food_collision(food):
+            snake2.grow()
+            food.generate_position()
+            score2.increase_score(10)
 
     screen.fill(black)
 
-    snake.draw(screen)
+    # Dessiner les éléments
+    if game_mode == 1 or snake1_alive:
+        snake1.draw(screen)
+    if game_mode == 2 and snake2_alive:
+        snake2.draw(screen)
+
     food.draw(screen)
     portal.draw(screen)
     for obstacle in obstacles:
         obstacle.draw(screen)
-    score.display_score(screen)
+
+    # Afficher les scores
+    if game_mode == 1:
+        score1.display_score(screen)
+    else:
+        score1.display_score(screen, 'left', 1)
+        score2.display_score(screen, 'right', 2)
 
     pygame.display.flip()
     pygame.time.Clock().tick(fps)
